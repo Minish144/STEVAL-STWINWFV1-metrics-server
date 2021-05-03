@@ -17,8 +17,17 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
+
+/* Defines ------------------------------------------------------------------*/
+#define SENSOR_BUS hsmbus2
+
+/* Defines ----------------------------------------------------------*/
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <string.h>
+#include <stdio.h>
+#include "../../Drivers/stts751/stts751_reg.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -156,6 +165,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
+
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
