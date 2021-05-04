@@ -17,18 +17,9 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-
-/* Defines ------------------------------------------------------------------*/
-#define SENSOR_BUS hsmbus2
-
-/* Defines ----------------------------------------------------------*/
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <string.h>
-#include <stdio.h>
-#include "../../Drivers/stts751/stts751_reg.h"
-
+#include "../../Drivers/HTS221/Inc/hts221_reg.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -45,7 +36,16 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+typedef struct {
+	float x0;
+	float y0;
+	float x1;
+	float y1;
+} lin_t;
 
+float linear_interpolation(lin_t *lin, int16_t x) {
+	return ((lin->y1 - lin->y0) * x + ((lin->x1 * lin->y0) - (lin->x0 * lin->y1))) / (lin->x1 - lin->x0);
+}
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -58,7 +58,7 @@ DFSDM_Filter_HandleTypeDef hdfsdm1_filter0;
 DFSDM_Channel_HandleTypeDef hdfsdm1_channel5;
 DFSDM_Channel_HandleTypeDef hdfsdm1_channel7;
 
-SMBUS_HandleTypeDef hsmbus2;
+I2C_HandleTypeDef hi2c2;
 I2C_HandleTypeDef hi2c3;
 I2C_HandleTypeDef hi2c4;
 
@@ -84,7 +84,10 @@ UART_HandleTypeDef huart3;
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
-
+static uint8_t whoamI;
+lin_t lin_hum;
+lin_t lin_temp;
+stmdev_ctx_t hts221Driver;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -94,7 +97,7 @@ static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_DFSDM1_Init(void);
-static void MX_I2C2_SMBUS_Init(void);
+static void MX_I2C2_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_I2C4_Init(void);
 static void MX_LTDC_Init(void);
@@ -110,7 +113,9 @@ static void MX_USART2_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 /* USER CODE BEGIN PFP */
-
+HAL_StatusTypeDef Init_HTS221(void);
+static int32_t hts221_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len);
+static int32_t hts221_write(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -150,7 +155,7 @@ int main(void)
   MX_ADC1_Init();
   MX_DAC1_Init();
   MX_DFSDM1_Init();
-  MX_I2C2_SMBUS_Init();
+  MX_I2C2_Init();
   MX_I2C3_Init();
   MX_I2C4_Init();
   MX_LTDC_Init();
@@ -165,9 +170,12 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
-
   /* USER CODE BEGIN 2 */
+  hts221Driver.handle = &hi2c2;
+  hts221Driver.read_reg = hts221_read;
+  hts221Driver.write_reg = hts221_write;
 
+  Init_HTS221();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -177,6 +185,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -444,7 +453,7 @@ static void MX_DFSDM1_Init(void)
   * @param None
   * @retval None
   */
-static void MX_I2C2_SMBUS_Init(void)
+static void MX_I2C2_Init(void)
 {
 
   /* USER CODE BEGIN I2C2_Init 0 */
@@ -454,26 +463,28 @@ static void MX_I2C2_SMBUS_Init(void)
   /* USER CODE BEGIN I2C2_Init 1 */
 
   /* USER CODE END I2C2_Init 1 */
-  hsmbus2.Instance = I2C2;
-  hsmbus2.Init.Timing = 0x307075B1;
-  hsmbus2.Init.AnalogFilter = SMBUS_ANALOGFILTER_ENABLE;
-  hsmbus2.Init.OwnAddress1 = 2;
-  hsmbus2.Init.AddressingMode = SMBUS_ADDRESSINGMODE_7BIT;
-  hsmbus2.Init.DualAddressMode = SMBUS_DUALADDRESS_DISABLE;
-  hsmbus2.Init.OwnAddress2 = 0;
-  hsmbus2.Init.OwnAddress2Masks = SMBUS_OA2_NOMASK;
-  hsmbus2.Init.GeneralCallMode = SMBUS_GENERALCALL_DISABLE;
-  hsmbus2.Init.NoStretchMode = SMBUS_NOSTRETCH_DISABLE;
-  hsmbus2.Init.PacketErrorCheckMode = SMBUS_PEC_DISABLE;
-  hsmbus2.Init.PeripheralMode = SMBUS_PERIPHERAL_MODE_SMBUS_SLAVE;
-  hsmbus2.Init.SMBusTimeout = 0x000085B8;
-  if (HAL_SMBUS_Init(&hsmbus2) != HAL_OK)
+  hi2c2.Instance = I2C2;
+  hi2c2.Init.Timing = 0x307075B1;
+  hi2c2.Init.OwnAddress1 = 0;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
   {
     Error_Handler();
   }
-  /** configuration Alert Mode
+  /** Configure Analogue filter
   */
-  if (HAL_SMBUS_EnableAlert_IT(&hsmbus2) != HAL_OK)
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -1376,7 +1387,45 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+HAL_StatusTypeDef Init_HTS221(void) {
+  /* Check device ID for Humidity sensor */
+  whoamI = 0;
+  hts221_device_id_get(&hts221Driver, &whoamI);
+  /* Configure Humidity sensor */
+  if (whoamI == HTS221_ID) {
+    /* Enable Block Data Update */
+    hts221_block_data_update_set(&hts221Driver, PROPERTY_ENABLE);
+    /* Set Output Data Rate */
+    hts221_data_rate_set(&hts221Driver, HTS221_ODR_12Hz5);
+    hts221_humidity_avg_set(&hts221Driver, HTS221_H_AVG_4);
+    hts221_temperature_avg_set(&hts221Driver, HTS221_T_AVG_2);
+    /* Device Power On */
+    hts221_power_on_set(&hts221Driver, PROPERTY_ENABLE);
+    /* Read humidity calibration coefficient */
+    hts221_hum_adc_point_0_get(&hts221Driver, &lin_hum.x0);
+    hts221_hum_rh_point_0_get(&hts221Driver, &lin_hum.y0);
+    hts221_hum_adc_point_1_get(&hts221Driver, &lin_hum.x1);
+    hts221_hum_rh_point_1_get(&hts221Driver, &lin_hum.y1);
+    /* Read temperature calibration coefficient */
+    hts221_temp_adc_point_0_get(&hts221Driver, &lin_temp.x0);
+    hts221_temp_deg_point_0_get(&hts221Driver, &lin_temp.y0);
+    hts221_temp_adc_point_1_get(&hts221Driver, &lin_temp.x1);
+    hts221_temp_deg_point_1_get(&hts221Driver, &lin_temp.y1);
+    return HAL_OK;
+  } else {
+    return HAL_ERROR;
+  }
+}
 
+static int32_t hts221_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len) {
+  if (len > 1) reg |= 0x80;
+  return HAL_I2C_Mem_Read(handle, HTS221_I2C_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, bufp, len, 1000);
+}
+
+static int32_t hts221_write(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len) {
+  if (len > 1) reg |= 0x80;
+  return HAL_I2C_Mem_Write(handle, HTS221_I2C_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, bufp, len, 1000);
+}
 /* USER CODE END 4 */
 
 /**
