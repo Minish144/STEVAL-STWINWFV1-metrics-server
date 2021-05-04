@@ -27,7 +27,21 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef union {
+  int16_t i16bit;
+  uint8_t u8bit[2];
+} axis1bit16_t;
 
+typedef union {
+  int32_t i32bit;
+  uint8_t u8bit[4];
+} axis1bit32_t;
+
+typedef union {
+  int16_t i16bit[3];
+  uint8_t u8bit[6];
+} axis3bit16_t;
+/* USER CODE END PT
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -130,7 +144,11 @@ static int32_t hts221_write(void *handle, uint8_t reg, uint8_t *bufp, uint16_t l
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  hts221_reg_t reg_HTS221;
+  static axis1bit16_t data_raw_humidity_HTS221;
+  static axis1bit16_t data_raw_temperature_HTS221;
+  static float humidity_perc_HTS221;
+  static float temperature_degC_HTS221;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -185,7 +203,22 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
+    /* Humidity from HTS221 */
+    hts221_status_get(&hts221Driver, &reg_HTS221.status_reg);
+    if (reg_HTS221.status_reg.h_da) {
+      memset(data_raw_humidity_HTS221.u8bit, 0x00, sizeof(int16_t));
+      hts221_humidity_raw_get(&hts221Driver, data_raw_humidity_HTS221.u8bit);
+      humidity_perc_HTS221 = linear_interpolation(&lin_hum, data_raw_humidity_HTS221.i16bit);
+      if (humidity_perc_HTS221 < 0) humidity_perc_HTS221 = 0;
+      if (humidity_perc_HTS221 > 100) humidity_perc_HTS221 = 100;
+    }
+    /* Temperature from HTS221 */
+    if (reg_HTS221.status_reg.t_da) {
+      memset(data_raw_temperature_HTS221.u8bit, 0x00, sizeof(int16_t));
+      hts221_temperature_raw_get(&hts221Driver, data_raw_temperature_HTS221.u8bit);
+      temperature_degC_HTS221 = linear_interpolation(&lin_temp, data_raw_temperature_HTS221.i16bit);
+    }
+/*
   }
   /* USER CODE END 3 */
 }
