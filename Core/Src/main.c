@@ -22,7 +22,8 @@
 #include "../../Drivers/HTS221/Inc/hts221_reg.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -148,11 +149,13 @@ int main(void)
   static axis1bit16_t data_raw_temperature_HTS221;
   static float humidity_perc_HTS221;
   static float temperature_degC_HTS221;
+  uint8_t buf[12];
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+
   HAL_Init();
 
   /* USER CODE BEGIN Init */
@@ -202,23 +205,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-    /* Humidity from HTS221 */
-    hts221_status_get(&hts221Driver, &reg_HTS221.status_reg);
-    if (reg_HTS221.status_reg.h_da) {
-      memset(data_raw_humidity_HTS221.u8bit, 0x00, sizeof(int16_t));
-      hts221_humidity_raw_get(&hts221Driver, data_raw_humidity_HTS221.u8bit);
-      humidity_perc_HTS221 = linear_interpolation(&lin_hum, data_raw_humidity_HTS221.i16bit);
-      if (humidity_perc_HTS221 < 0) humidity_perc_HTS221 = 0;
-      if (humidity_perc_HTS221 > 100) humidity_perc_HTS221 = 100;
-    }
-
-    /* Temperature from HTS221 */
     if (reg_HTS221.status_reg.t_da) {
       memset(data_raw_temperature_HTS221.u8bit, 0x00, sizeof(int16_t));
       hts221_temperature_raw_get(&hts221Driver, data_raw_temperature_HTS221.u8bit);
       temperature_degC_HTS221 = linear_interpolation(&lin_temp, data_raw_temperature_HTS221.i16bit);
     }
+    sprintf((char*)buf, "%f °C\r\n", temperature_degC_HTS221);
+    HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), HAL_MAX_DELAY);
+    HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
