@@ -409,15 +409,15 @@ void HAL_DFSDM_ChannelMspDeInit(DFSDM_Channel_HandleTypeDef* hdfsdm_channel)
 }
 
 /**
-* @brief SMBUS MSP Initialization
+* @brief I2C MSP Initialization
 * This function configures the hardware resources used in this example
-* @param hsmbus: SMBUS handle pointer
+* @param hi2c: I2C handle pointer
 * @retval None
 */
-void HAL_SMBUS_MspInit(SMBUS_HandleTypeDef* hsmbus)
+void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(hsmbus->Instance==I2C2)
+  if(hi2c->Instance==I2C2)
   {
   /* USER CODE BEGIN I2C2_MspInit 0 */
 
@@ -447,19 +447,7 @@ void HAL_SMBUS_MspInit(SMBUS_HandleTypeDef* hsmbus)
 
   /* USER CODE END I2C2_MspInit 1 */
   }
-
-}
-
-/**
-* @brief I2C MSP Initialization
-* This function configures the hardware resources used in this example
-* @param hi2c: I2C handle pointer
-* @retval None
-*/
-void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(hi2c->Instance==I2C3)
+  else if(hi2c->Instance==I2C3)
   {
   /* USER CODE BEGIN I2C3_MspInit 0 */
 
@@ -512,14 +500,14 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
 }
 
 /**
-* @brief SMBUS MSP De-Initialization
+* @brief I2C MSP De-Initialization
 * This function freeze the hardware resources used in this example
-* @param hsmbus: SMBUS handle pointer
+* @param hi2c: I2C handle pointer
 * @retval None
 */
-void HAL_SMBUS_MspDeInit(SMBUS_HandleTypeDef* hsmbus)
+void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
 {
-  if(hsmbus->Instance==I2C2)
+  if(hi2c->Instance==I2C2)
   {
   /* USER CODE BEGIN I2C2_MspDeInit 0 */
 
@@ -545,18 +533,7 @@ void HAL_SMBUS_MspDeInit(SMBUS_HandleTypeDef* hsmbus)
 
   /* USER CODE END I2C2_MspDeInit 1 */
   }
-
-}
-
-/**
-* @brief I2C MSP De-Initialization
-* This function freeze the hardware resources used in this example
-* @param hi2c: I2C handle pointer
-* @retval None
-*/
-void HAL_I2C_MspDeInit(I2C_HandleTypeDef* hi2c)
-{
-  if(hi2c->Instance==I2C3)
+  else if(hi2c->Instance==I2C3)
   {
   /* USER CODE BEGIN I2C3_MspDeInit 0 */
 

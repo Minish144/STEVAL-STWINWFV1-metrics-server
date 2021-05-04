@@ -91,7 +91,7 @@ int32_t stts751_write_reg(stmdev_ctx_t *ctx, uint8_t reg,
   *
   */
 
-float_tstts751_from_lsb_to_celsius(int16_t lsb)
+float_t stts751_from_lsb_to_celsius(int16_t lsb)
 {
   return ((float)lsb) / 256.0f;
 }
