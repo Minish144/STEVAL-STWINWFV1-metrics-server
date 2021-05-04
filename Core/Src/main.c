@@ -41,7 +41,6 @@ typedef union {
   int16_t i16bit[3];
   uint8_t u8bit[6];
 } axis3bit16_t;
-/* USER CODE END PT
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -203,6 +202,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
     /* Humidity from HTS221 */
     hts221_status_get(&hts221Driver, &reg_HTS221.status_reg);
     if (reg_HTS221.status_reg.h_da) {
@@ -212,13 +212,13 @@ int main(void)
       if (humidity_perc_HTS221 < 0) humidity_perc_HTS221 = 0;
       if (humidity_perc_HTS221 > 100) humidity_perc_HTS221 = 100;
     }
+
     /* Temperature from HTS221 */
     if (reg_HTS221.status_reg.t_da) {
       memset(data_raw_temperature_HTS221.u8bit, 0x00, sizeof(int16_t));
       hts221_temperature_raw_get(&hts221Driver, data_raw_temperature_HTS221.u8bit);
       temperature_degC_HTS221 = linear_interpolation(&lin_temp, data_raw_temperature_HTS221.i16bit);
     }
-/*
   }
   /* USER CODE END 3 */
 }
