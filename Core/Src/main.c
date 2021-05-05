@@ -19,9 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "../../Drivers/HTS221/Inc/hts221_reg.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "hts221_reg.h"
 #include <string.h>
 #include <stdio.h>
 /* USER CODE END Includes */
