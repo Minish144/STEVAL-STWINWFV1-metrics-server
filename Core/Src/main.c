@@ -21,9 +21,7 @@
 #include "main.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "hts221_reg.h"
-#include <string.h>
-#include <stdio.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -145,9 +143,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
   hts221_reg_t reg_HTS221;
-  static axis1bit16_t data_raw_humidity_HTS221;
   static axis1bit16_t data_raw_temperature_HTS221;
-  static float humidity_perc_HTS221;
   static float temperature_degC_HTS221;
   uint8_t buf[12];
   /* USER CODE END 1 */

@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "stts751_reg.h": "c"
+        "stts751_reg.h": "c",
+        "string.h": "c"
     }
 }
